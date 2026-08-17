@@ -15,12 +15,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import com.ekart.model.CreateOrderRequest;
 import com.ekart.model.LineItem;
 import com.ekart.model.Order;
 import com.ekart.model.UpdateOrderRequest;
 import com.ekart.service.OrderService;
+import com.ekart.repository.UserRepository;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class OrderRestController {
 
     private final OrderService orderService;
+    private final UserRepository userRepository;
     private static final Logger log =
             LoggerFactory.getLogger(OrderRestController.class);
 
@@ -50,7 +54,7 @@ public class OrderRestController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Order createOrder(
+    public Order createOrder(@AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody CreateOrderRequest request) {
         log.info("Creating order for customer: {}",
                 request.customerName());
@@ -59,6 +63,7 @@ public class OrderRestController {
             .email(request.email())
             .orderDate(request.orderDate())
             .totalPrice(BigDecimal.ZERO)
+            .owner(userRepository.findByUsername(user.getUsername()).orElseThrow())
             .build();
         return orderService.saveOrder(order);
     }

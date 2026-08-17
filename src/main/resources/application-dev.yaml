@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:ekartdb
+    username: sa
+    password: ''
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+
+ekart:
+  dev:
+    seeder:
+      enabled: true
+      order-count: 10
+  security:
+    require-auth: false
+
+logging:
+  level:
+    com.ekart: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.springframework.security: DEBUG

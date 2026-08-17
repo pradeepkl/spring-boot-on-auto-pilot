@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import com.ekart.model.Order;
 import com.ekart.repository.OrderRepository;
@@ -20,6 +21,7 @@ class OrderServiceTests {
     private OrderRepository orderRepository;
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void seededOrdersAreAvailable() {
         assertThat(orderService.getAllOrders()).hasSize(10);
         Order first = orderService.getOrderById(1L);

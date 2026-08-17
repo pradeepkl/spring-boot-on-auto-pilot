@@ -1,25 +1,26 @@
-loadStudent: false
+spring:
+  application:
+    name: ekart
+  profiles:
+    default: dev
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
 server:
   port: 9090
+  shutdown: graceful
 
-spring:
-  datasource:
-    url: jdbc:h2:mem:ekartdb
-    username: sa
-    password: ''
-  h2:
-    console:
-      enabled: true
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: create-drop
-
-app:
-  seed:
-    order-count: 10
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,conditions,beans,env,mappings
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
 
 logging:
   level:
-    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE
+    org.springframework.boot.autoconfigure.condition: DEBUG
