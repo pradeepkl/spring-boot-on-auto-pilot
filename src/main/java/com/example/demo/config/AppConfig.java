@@ -23,6 +23,7 @@ public class AppConfig implements CommandLineRunner {
     public void run(String... args) {
         log.info("Beans registered in the application context:");
         Arrays.stream(context.getBeanDefinitionNames())
+              .filter(name -> name.contains("student"))
               .sorted()
               .forEach(name -> log.info("  {}", name));
     }
