@@ -1,9 +1,12 @@
 package com.ekart.model;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,9 +32,26 @@ public class LineItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "product_name")
     private String productName;
     private int quantity;
     private BigDecimal price;
+
+    @Column(name = "created_timestamp")
+    @JsonIgnore
+    private Instant createdTimestamp;
+
+    @Column(name = "updated_timestamp")
+    @JsonIgnore
+    private Instant updatedTimestamp;
+
+    @Column(name = "created_by")
+    @JsonIgnore
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    @JsonIgnore
+    private String updatedBy;
 
     @ManyToOne
     @JoinColumn(name = "order_id")

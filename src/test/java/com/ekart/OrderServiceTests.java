@@ -26,6 +26,10 @@ class OrderServiceTests {
         assertThat(first.getCustomerName()).isNotBlank();
         assertThat(first.getEmail()).isNotBlank();
         assertThat(first.getTotalPrice()).isNotNull();
+        assertThat(first.getCreatedBy()).isEqualTo("system");
+        assertThat(first.getUpdatedBy()).isEqualTo("system");
+        assertThat(first.getCreatedTimestamp()).isNotNull();
+        assertThat(first.getUpdatedTimestamp()).isNotNull();
     }
 
     @Test

@@ -2,8 +2,10 @@ package com.ekart;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,6 +55,7 @@ class OrderRestControllerTests {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.customerName").value("Priya Sharma"))
+                .andExpect(jsonPath("$.orderDate").value("15-01-2025"))
                 .andReturn();
 
         String body = created.getResponse().getContentAsString();
@@ -85,5 +88,16 @@ class OrderRestControllerTests {
 
         mockMvc.perform(delete("/v1/orders/" + id))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void corsAllowsLocalhost3000OnV1Orders() throws Exception {
+        mockMvc.perform(options("/v1/orders")
+                        .header("Origin", "http://localhost:3000")
+                        .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(
+                        "Access-Control-Allow-Origin",
+                        "http://localhost:3000"));
     }
 }

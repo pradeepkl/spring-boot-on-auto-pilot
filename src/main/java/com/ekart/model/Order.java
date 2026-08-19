@@ -1,13 +1,16 @@
 package com.ekart.model;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -34,10 +37,33 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "customer_name", nullable = false)
     private String customerName;
+
+    @Column(nullable = false)
     private String email;
+
+    @Column(name = "total_price", nullable = false)
     private BigDecimal totalPrice;
+
+    @Column(name = "order_date", nullable = false)
     private LocalDate orderDate;
+
+    @Column(name = "created_timestamp")
+    @JsonIgnore
+    private Instant createdTimestamp;
+
+    @Column(name = "updated_timestamp")
+    @JsonIgnore
+    private Instant updatedTimestamp;
+
+    @Column(name = "created_by")
+    @JsonIgnore
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    @JsonIgnore
+    private String updatedBy;
 
     @OneToMany(
         mappedBy = "order",
