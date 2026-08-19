@@ -17,3 +17,7 @@ spring:
 app:
   seed:
     order-count: 10
+
+logging:
+  level:
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE
