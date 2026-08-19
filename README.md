@@ -117,4 +117,38 @@ user `sa`, empty password).
 * Datafaker `2.7.0` and `ApplicationReadyEvent` seeding of 10 orders
 * H2 console verification of `ORDERS` and `LINE_ITEM`
 
+## Chapter 4 — The Web Layer
+
+To view the files for Chapter 4, check out the `chapter-04-code` tag (commit
+`2a4dbd7`). That snapshot keeps the Chapter 3 eKart domain and adds
+`OrderRestController`, validation DTOs, and `GlobalExceptionHandler`.
+
+```bash
+git checkout chapter-04-code
+```
+
+You can also check out the commit directly:
+
+```bash
+git checkout 2a4dbd75bf2fa35781798db65c0935868e824c84
+```
+
+Run the Chapter 4 application with JDK 21:
+
+```bash
+./mvnw test
+./mvnw spring-boot:run
+```
+
+Then call `http://localhost:9090/v1/orders`.
+
+### Topics covered in Chapter 4
+
+* `OrderRestController` mappings under `/v1/orders`
+* `CreateOrderRequest` / `UpdateOrderRequest` with `@Valid`
+* `spring-boot-starter-validation` (Hibernate Validator is not transitive from the web starter on Boot 4.1.0)
+* `GlobalExceptionHandler` returning `ErrorResponse` for `404`
+* TRACE mappings on `RequestMappingHandlerMapping`
+* curl success and not-found paths on port 9090
+
 Return to the latest code with `git checkout main`.
