@@ -151,4 +151,40 @@ Then call `http://localhost:9090/v1/orders`.
 * TRACE mappings on `RequestMappingHandlerMapping`
 * curl success and not-found paths on port 9090
 
+## Chapter 5 — Overriding Defaults
+
+To view the files for Chapter 5, check out the `chapter-05-code` tag (commit
+`fe985c1`). That snapshot keeps the Chapter 4 REST API and adds property
+tuning, Hibernate/Jackson/WebMvc extension points, and audit columns. HikariCP
+and Logback remain the defaults.
+
+```bash
+git checkout chapter-05-code
+```
+
+You can also check out the commit directly:
+
+```bash
+git checkout fe985c18518549306408392ae34eabf53c270fb9
+```
+
+Run the Chapter 5 application with JDK 21:
+
+```bash
+./mvnw test
+./mvnw spring-boot:run
+```
+
+Then call `http://localhost:9090/v1/orders` (`orderDate` is `dd-MM-yyyy`).
+
+### Topics covered in Chapter 5
+
+* Property tuning for Hikari, Jackson `non_null`, and Tomcat threads
+* `HibernatePropertiesCustomizer` naming strategy and audit interceptor
+* `JsonMapperBuilderCustomizer` for `LocalDate` as `dd-MM-yyyy`
+* `WebMvcConfigurer` CORS on `/v1/**`
+* Audit fields on `Order` / `LineItem` (`@JsonIgnore`, no `UserAccount`)
+* Implementation-replacement and `JsonMapper` `@Bean` examples are in the
+  manuscript only — this tag keeps starter defaults and camelCase JSON
+
 Return to the latest code with `git checkout main`.
