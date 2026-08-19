@@ -1,4 +1,19 @@
-loadStudent: false
-
 server:
   port: 9090
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:ekartdb
+    username: sa
+    password: ''
+  h2:
+    console:
+      enabled: true
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+
+app:
+  seed:
+    order-count: 10
