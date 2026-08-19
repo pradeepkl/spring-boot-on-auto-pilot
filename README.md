@@ -80,4 +80,41 @@ Run the Chapter 2 application with JDK 21:
 * `spring-boot-starter-data-jpa` plus H2 unlocking DataSource, Hibernate, and transactions
 * Reading `dependency:tree` and the conditions report after each classpath change
 
+## Chapter 3 — The Application Layer
+
+To view the files for Chapter 3, check out the `chapter-03-code` tag (commit
+`a237c44`). That snapshot moves the application to `com.ekart`, adds `Order` /
+`LineItem`, repositories, `OrderService`, and `BootstrapAppData` seeded with
+Datafaker.
+
+```bash
+git checkout chapter-03-code
+```
+
+You can also check out the commit directly:
+
+```bash
+git checkout a237c448191e038eabd0d3ec743ac13b90d5df5a
+```
+
+Run the Chapter 3 application with JDK 21:
+
+```bash
+./mvnw test
+./mvnw spring-boot:run
+```
+
+Then open `http://localhost:9090/h2-console` (JDBC URL `jdbc:h2:mem:ekartdb`,
+user `sa`, empty password).
+
+### Topics covered in Chapter 3
+
+* Moving the scan root to `com.ekart` / `EkartApplication`
+* DevTools and Lombok (Lombok excluded from the fat JAR)
+* `Order` and `LineItem` JPA mapping, cascade, and owning-side foreign keys
+* Spring Data repositories as generated proxies
+* `OrderService` constructor injection and `@Transactional` writes
+* Datafaker `2.7.0` and `ApplicationReadyEvent` seeding of 10 orders
+* H2 console verification of `ORDERS` and `LINE_ITEM`
+
 Return to the latest code with `git checkout main`.
