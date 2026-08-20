@@ -56,6 +56,10 @@ public class SecurityConfig {
                     SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/actuator/health", "/actuator/health/**")
+                        .permitAll()
+                .requestMatchers("/actuator/**")
+                        .hasRole("ADMIN")
                 .requestMatchers(
                         HttpMethod.GET, "/v1/orders")
                         .hasRole("ADMIN")

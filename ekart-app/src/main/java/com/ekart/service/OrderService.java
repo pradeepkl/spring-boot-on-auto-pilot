@@ -8,6 +8,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
 import com.ekart.exception.OrderNotFoundException;
 import com.ekart.model.LineItem;
 import com.ekart.model.Order;
@@ -23,6 +25,7 @@ public class OrderService {
             LoggerFactory.getLogger(OrderService.class);
 
     private final OrderRepository orderRepository;
+    private final MeterRegistry meterRegistry;
 
     @PreAuthorize("hasRole('ADMIN')")
     public List<Order> getAllOrders() {
@@ -48,7 +51,9 @@ public class OrderService {
     public Order saveOrder(Order order) {
         log.info("Saving order for customer: {}",
                 order.getCustomerName());
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        meterRegistry.counter("orders.created").increment();
+        return saved;
     }
 
     @Transactional
