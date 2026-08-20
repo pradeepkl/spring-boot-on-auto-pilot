@@ -32,9 +32,9 @@ class OrderRestControllerTests {
     private MockMvc mockMvc;
 
     @Test
-    void unauthenticatedListReturns401() throws Exception {
+    void unauthenticatedListIsRejectedByMethodSecurity() throws Exception {
         mockMvc.perform(get("/v1/orders"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test

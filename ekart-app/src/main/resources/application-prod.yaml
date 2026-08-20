@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ekart
+    username: ekart_user
+    password: ekart_pass
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+
+ekart:
+  dev:
+    seeder:
+      enabled: false
+
+logging:
+  level:
+    com.ekart: INFO
+    org.hibernate.SQL: WARN
+    org.springframework.security: WARN
