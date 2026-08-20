@@ -187,4 +187,44 @@ Then call `http://localhost:9090/v1/orders` (`orderDate` is `dd-MM-yyyy`).
 * Implementation-replacement and `JsonMapper` `@Bean` examples are in the
   manuscript only — this tag keeps starter defaults and camelCase JSON
 
+## Chapter 6 — Custom Autoconfiguration
+
+To view the files for Chapter 6, check out the `chapter-06-code` tag (commit
+`0ccac1a`). That snapshot splits the Chapter 5 tree into `ekart-dev-starter`
+and `ekart-app`. Seeding is registered through `AutoConfiguration.imports`.
+H2 remains the database. Security, Actuator, and profiles are not in this tag.
+
+```bash
+git checkout chapter-06-code
+```
+
+You can also check out the commit directly:
+
+```bash
+git checkout 0ccac1a8e29ff5fc2e93d2e11a6963f7831341c4
+```
+
+Run the Chapter 6 application with JDK 21:
+
+```bash
+./mvnw -pl ekart-app -am test
+./mvnw -pl ekart-app spring-boot:run
+./mvnw -pl ekart-app spring-boot:run -Dspring-boot.run.arguments=--debug
+```
+
+Then call `http://localhost:9090/v1/orders` (no credentials; seeder enabled in
+`application.yaml`). Disable with `--ekart.dev.seeder.enabled=false`.
+
+### Topics covered in Chapter 6
+
+* Parent POM with sibling modules `ekart-dev-starter` and `ekart-app`
+* `SeederProperties` under `ekart.dev.seeder`
+* `DevDataProvider`, `DataSeeder`, and `BootstrapAppData` in the starter
+* `EkartDevAutoConfiguration` with `@ConditionalOnProperty` and `@ConditionalOnBean`
+* `AutoConfiguration.imports` registration
+* `EkartDevDataProvider` plus Datafaker 2.7.0 in `ekart-app`
+* `scanBasePackages` so `com.ekart.dev` is not component-scanned
+* `--debug` CONDITIONS EVALUATION REPORT for enable and disable
+* `CustomDevDataProvider` is in the manuscript only — this tag does not include it
+
 Return to the latest code with `git checkout main`.
