@@ -347,4 +347,36 @@ bound; management shares port 9090.
 * `/actuator/loggers` for `com.ekart.service.OrderService`
 * Production-chain Actuator security; health public, other routes `ADMIN`
 
+## Chapter 10 — Context Slice Testing
+
+To view the files for Chapter 10, check out the `chapter-10-code` tag (commit
+`bd7aade`). That snapshot adds web and JPA slice tests, `findByEmail`, a `test`
+profile used only by `TestProfileConfigurationTests`, and one `RANDOM_PORT`
+HTTP test. Do not merge this tag onto `main`.
+
+```bash
+git checkout chapter-10-code
+```
+
+You can also check out the commit directly:
+
+```bash
+git checkout bd7aadea3e8318c64d50021c715ed4b063d4f6cc
+```
+
+Run the Chapter 10 tests with JDK 21:
+
+```bash
+./mvnw -pl ekart-app -am test
+```
+
+### Topics covered in Chapter 10
+
+* Same autoconfiguration engine for tests; slice vs full conditions reports
+* `@WebMvcTest` + `@MockitoBean` on `OrderRestController` (`/v1/orders`)
+* `@DataJpaTest` + `findByEmail` (orders require an owner)
+* `@SpringBootTest` `contextLoads` and `RANDOM_PORT` real HTTP
+* `@ActiveProfiles("test")` without breaking default `dev` tests
+* Security on the production chain: anonymous 401, customer 403, admin 200
+
 Return to the latest code with `git checkout main`.
