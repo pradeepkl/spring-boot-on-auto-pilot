@@ -33,9 +33,11 @@ spring:
     default-property-inclusion: non_null
     time-zone: UTC
 
-app:
-  seed:
-    order-count: 10
+ekart:
+  dev:
+    seeder:
+      enabled: true
+      order-count: 10
 
 logging:
   level:
