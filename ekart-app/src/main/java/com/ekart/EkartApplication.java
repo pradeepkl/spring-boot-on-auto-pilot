@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
         "com.ekart.controller",
         "com.ekart.exception",
         "com.ekart.repository",
+        "com.ekart.security",
         "com.ekart.service"
 })
 public class EkartApplication {

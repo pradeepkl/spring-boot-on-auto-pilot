@@ -1,5 +1,6 @@
 package com.ekart;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
@@ -9,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,20 +23,57 @@ import org.springframework.test.web.servlet.MvcResult;
 @AutoConfigureMockMvc
 class OrderRestControllerTests {
 
+    private static final String CUSTOMER = "customer@ekart.com";
+    private static final String OTHER_CUSTOMER = "othercustomer@ekart.com";
+    private static final String ADMIN = "admin@ekart.com";
+    private static final String PASSWORD = "password123";
+
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    void getAllOrdersReturnsSeededData() throws Exception {
+    void unauthenticatedListReturns401() throws Exception {
         mockMvc.perform(get("/v1/orders"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void customerListReturns403() throws Exception {
+        mockMvc.perform(get("/v1/orders")
+                        .with(httpBasic(CUSTOMER, PASSWORD)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminListReturnsSeededDataWithoutPasswordOrOwner() throws Exception {
+        mockMvc.perform(get("/v1/orders")
+                        .with(httpBasic(ADMIN, PASSWORD)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(10)));
+                .andExpect(jsonPath("$.length()").value(Matchers.greaterThanOrEqualTo(10)))
+                .andExpect(jsonPath("$[0].password").doesNotExist())
+                .andExpect(jsonPath("$[0].owner").doesNotExist());
+    }
+
+    @Test
+    void ownerCanReadOwnOrder() throws Exception {
+        mockMvc.perform(get("/v1/orders/1")
+                        .with(httpBasic(CUSTOMER, PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    void otherCustomerCannotReadOwnedOrder() throws Exception {
+        mockMvc.perform(get("/v1/orders/1")
+                        .with(httpBasic(OTHER_CUSTOMER, PASSWORD)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     void getMissingOrderReturns404ErrorResponse() throws Exception {
-        mockMvc.perform(get("/v1/orders/999"))
+        mockMvc.perform(get("/v1/orders/999")
+                        .with(httpBasic(ADMIN, PASSWORD)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("Order not found with id: 999"))
@@ -44,6 +83,7 @@ class OrderRestControllerTests {
     @Test
     void createUpdateAddLineItemAndDeleteOrder() throws Exception {
         MvcResult created = mockMvc.perform(post("/v1/orders")
+                        .with(httpBasic(CUSTOMER, PASSWORD))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -62,6 +102,7 @@ class OrderRestControllerTests {
         String id = body.replaceAll("(?s).*\"id\"\\s*:\\s*(\\d+).*", "$1");
 
         mockMvc.perform(post("/v1/orders/" + id + "/lineitems")
+                        .with(httpBasic(CUSTOMER, PASSWORD))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -75,6 +116,7 @@ class OrderRestControllerTests {
                 .andExpect(jsonPath("$.lineItems[0].productName").value("Wireless Keyboard"));
 
         mockMvc.perform(put("/v1/orders/" + id)
+                        .with(httpBasic(CUSTOMER, PASSWORD))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -86,7 +128,8 @@ class OrderRestControllerTests {
                 .andExpect(jsonPath("$.customerName").value("Priya R. Sharma"))
                 .andExpect(jsonPath("$.email").value("priya.sharma@example.com"));
 
-        mockMvc.perform(delete("/v1/orders/" + id))
+        mockMvc.perform(delete("/v1/orders/" + id)
+                        .with(httpBasic(CUSTOMER, PASSWORD)))
                 .andExpect(status().isNoContent());
     }
 
