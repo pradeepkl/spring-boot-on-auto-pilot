@@ -1,236 +1,146 @@
 package com.ekart;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-
-import org.junit.jupiter.api.BeforeEach;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
-import com.ekart.controller.OrderRestController;
-import com.ekart.exception.GlobalExceptionHandler;
-import com.ekart.exception.OrderNotFoundException;
-import com.ekart.model.CreateOrderRequest;
-import com.ekart.model.ErrorResponse;
-import com.ekart.model.LineItem;
-import com.ekart.model.Order;
-import com.ekart.model.Role;
-import com.ekart.model.UpdateOrderRequest;
-import com.ekart.model.UserAccount;
-import com.ekart.repository.UserRepository;
-import com.ekart.service.OrderService;
-
+@SpringBootTest
+@AutoConfigureMockMvc
 class OrderRestControllerTests {
 
-    private static final String CUSTOMER_USERNAME = "customer@ekart.com";
+    private static final String CUSTOMER = "customer@ekart.com";
+    private static final String OTHER_CUSTOMER = "othercustomer@ekart.com";
+    private static final String ADMIN = "admin@ekart.com";
+    private static final String PASSWORD = "password123";
 
-    private OrderRestController controller;
-    private FakeOrderService orderService;
-    private UserRepository userRepository;
-    private GlobalExceptionHandler exceptionHandler;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @BeforeEach
-    void setUp() {
-        orderService = new FakeOrderService();
-        userRepository = proxyUserRepository();
-
-        controller = new OrderRestController(orderService, userRepository);
-        exceptionHandler = new GlobalExceptionHandler();
+    @Test
+    void unauthenticatedListIsRejectedByMethodSecurity() throws Exception {
+        mockMvc.perform(get("/v1/orders"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    void getAllOrdersReturnsSeededData() {
-        List<Order> orders = controller.getAllOrders();
-
-        assertEquals(10, orders.size());
-        assertTrue(orders.getFirst().getLineItems().isEmpty());
-        assertTrue(orders.getFirst().getOwner().getUsername().startsWith("customer"));
+    void customerListReturns403() throws Exception {
+        mockMvc.perform(get("/v1/orders")
+                        .with(httpBasic(CUSTOMER, PASSWORD)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    void getMissingOrderReturns404ErrorResponse() {
-        OrderNotFoundException ex = assertThrows(
-                OrderNotFoundException.class,
-                () -> controller.getOrderById(999L));
-
-        MockHttpServletRequest request = new MockHttpServletRequest(
-                "GET",
-                "/v1/orders/999");
-        var response = exceptionHandler.handleOrderNotFound(ex, request);
-        ErrorResponse body = response.getBody();
-
-        assertEquals(404, response.getStatusCode().value());
-        assertEquals("Order not found with id: 999", body.message());
-        assertEquals("/v1/orders/999", body.path());
+    void adminListReturnsSeededDataWithoutPasswordOrOwner() throws Exception {
+        mockMvc.perform(get("/v1/orders")
+                        .with(httpBasic(ADMIN, PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(Matchers.greaterThanOrEqualTo(10)))
+                .andExpect(jsonPath("$[0].password").doesNotExist())
+                .andExpect(jsonPath("$[0].owner").doesNotExist());
     }
 
     @Test
-    void createUpdateAddLineItemAndDeleteOrder() {
-        UserDetails customer = User.withUsername(CUSTOMER_USERNAME)
-                .password("password123")
-                .authorities("ROLE_CUSTOMER")
-                .build();
-
-        Order created = controller.createOrder(
-                customer,
-                new CreateOrderRequest(
-                        "Priya Sharma",
-                        "priya@example.com",
-                        LocalDate.of(2025, 1, 15)));
-
-        assertEquals(11L, created.getId());
-        assertEquals("Priya Sharma", created.getCustomerName());
-        assertEquals("priya@example.com", created.getEmail());
-
-        Order withLineItem = controller.addLineItem(
-                created.getId(),
-                LineItem.builder()
-                        .productName("Wireless Keyboard")
-                        .quantity(2)
-                        .price(BigDecimal.valueOf(1299.00))
-                        .build());
-
-        assertEquals(1, withLineItem.getLineItems().size());
-        assertEquals("Wireless Keyboard", withLineItem.getLineItems().getFirst().getProductName());
-
-        Order updated = controller.updateOrder(
-                created.getId(),
-                new UpdateOrderRequest(
-                        "Priya R. Sharma",
-                        "priya.sharma@example.com"));
-
-        assertEquals("Priya R. Sharma", updated.getCustomerName());
-        assertEquals("priya.sharma@example.com", updated.getEmail());
-
-        controller.deleteOrder(created.getId());
-        assertThrows(OrderNotFoundException.class,
-                () -> orderService.getOrderById(created.getId()));
+    void ownerCanReadOwnOrder() throws Exception {
+        mockMvc.perform(get("/v1/orders/1")
+                        .with(httpBasic(CUSTOMER, PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
     }
 
-    private static UserAccount customerAccount() {
-        return UserAccount.builder()
-                .id(1L)
-                .username(CUSTOMER_USERNAME)
-                .password("password123")
-                .role(Role.CUSTOMER)
-                .build();
+    @Test
+    void otherCustomerCannotReadOwnedOrder() throws Exception {
+        mockMvc.perform(get("/v1/orders/1")
+                        .with(httpBasic(OTHER_CUSTOMER, PASSWORD)))
+                .andExpect(status().isForbidden());
     }
 
-    private static UserRepository proxyUserRepository() {
-        InvocationHandler handler = new InvocationHandler() {
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) {
-                if (method.getName().equals("findByUsername")
-                        && args != null
-                        && args.length == 1
-                        && CUSTOMER_USERNAME.equals(args[0])) {
-                    return Optional.of(customerAccount());
-                }
-                if (method.getDeclaringClass() == Object.class) {
-                    return switch (method.getName()) {
-                        case "toString" -> "ProxyUserRepository";
-                        case "hashCode" -> System.identityHashCode(proxy);
-                        case "equals" -> proxy == args[0];
-                        default -> null;
-                    };
-                }
-                throw new UnsupportedOperationException(
-                        "Unexpected repository method: " + method.getName());
-            }
-        };
-        return (UserRepository) Proxy.newProxyInstance(
-                UserRepository.class.getClassLoader(),
-                new Class<?>[] {UserRepository.class},
-                handler);
+    @Test
+    void getMissingOrderReturns404ErrorResponse() throws Exception {
+        mockMvc.perform(get("/v1/orders/999")
+                        .with(httpBasic(ADMIN, PASSWORD)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Order not found with id: 999"))
+                .andExpect(jsonPath("$.path").value("/v1/orders/999"));
     }
 
-    private static Order order(
-            long id,
-            String customerName,
-            String email,
-            UserAccount owner) {
-        return Order.builder()
-                .id(id)
-                .customerName(customerName)
-                .email(email)
-                .orderDate(LocalDate.of(2025, 1, 15))
-                .totalPrice(BigDecimal.valueOf(1999.00))
-                .owner(owner)
-                .lineItems(new ArrayList<>())
-                .build();
+    @Test
+    void createUpdateAddLineItemAndDeleteOrder() throws Exception {
+        MvcResult created = mockMvc.perform(post("/v1/orders")
+                        .with(httpBasic(CUSTOMER, PASSWORD))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "customerName": "Priya Sharma",
+                                  "email": "priya@example.com",
+                                  "orderDate": "2025-01-15"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.customerName").value("Priya Sharma"))
+                .andExpect(jsonPath("$.orderDate").value("15-01-2025"))
+                .andReturn();
+
+        String body = created.getResponse().getContentAsString();
+        String id = body.replaceAll("(?s).*\"id\"\\s*:\\s*(\\d+).*", "$1");
+
+        mockMvc.perform(post("/v1/orders/" + id + "/lineitems")
+                        .with(httpBasic(CUSTOMER, PASSWORD))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "productName": "Wireless Keyboard",
+                                  "quantity": 2,
+                                  "price": 1299.00
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.lineItems").isArray())
+                .andExpect(jsonPath("$.lineItems[0].productName").value("Wireless Keyboard"));
+
+        mockMvc.perform(put("/v1/orders/" + id)
+                        .with(httpBasic(CUSTOMER, PASSWORD))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "customerName": "Priya R. Sharma",
+                                  "email": "priya.sharma@example.com"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.customerName").value("Priya R. Sharma"))
+                .andExpect(jsonPath("$.email").value("priya.sharma@example.com"));
+
+        mockMvc.perform(delete("/v1/orders/" + id)
+                        .with(httpBasic(CUSTOMER, PASSWORD)))
+                .andExpect(status().isNoContent());
     }
 
-    private static final class FakeOrderService extends OrderService {
-
-        private final Map<Long, Order> orders = new LinkedHashMap<>();
-        private long nextId = 11L;
-
-        private FakeOrderService() {
-            super(null);
-            UserAccount owner = customerAccount();
-            for (long id = 1; id <= 10; id++) {
-                orders.put(id, order(
-                        id,
-                        "Customer " + id,
-                        "customer" + id + "@example.com",
-                        owner));
-            }
-        }
-
-        @Override
-        public List<Order> getAllOrders() {
-            return new ArrayList<>(orders.values());
-        }
-
-        @Override
-        public Order getOrderById(Long id) {
-            Order order = orders.get(id);
-            if (order == null) {
-                throw new OrderNotFoundException(id);
-            }
-            return order;
-        }
-
-        @Override
-        public Order saveOrder(Order order) {
-            order.setId(nextId++);
-            orders.put(order.getId(), order);
-            return order;
-        }
-
-        @Override
-        public Order updateOrder(Long id, Order updatedOrder) {
-            Order existing = getOrderById(id);
-            existing.setCustomerName(updatedOrder.getCustomerName());
-            existing.setEmail(updatedOrder.getEmail());
-            return existing;
-        }
-
-        @Override
-        public void deleteOrder(Long id) {
-            orders.remove(id);
-        }
-
-        @Override
-        public Order addLineItemToOrder(Long orderId, LineItem lineItem) {
-            Order order = getOrderById(orderId);
-            lineItem.setOrder(order);
-            order.getLineItems().add(lineItem);
-            return order;
-        }
+    @Test
+    void corsAllowsLocalhost3000OnV1Orders() throws Exception {
+        mockMvc.perform(options("/v1/orders")
+                        .header("Origin", "http://localhost:3000")
+                        .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(
+                        "Access-Control-Allow-Origin",
+                        "http://localhost:3000"));
     }
 }

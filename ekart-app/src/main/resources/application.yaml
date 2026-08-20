@@ -1,3 +1,12 @@
+server:
+  port: 9090
+  shutdown: graceful
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 10
+    connection-timeout: 20000
+
 spring:
   application:
     name: ekart
@@ -5,22 +14,30 @@ spring:
     default: dev
   lifecycle:
     timeout-per-shutdown-phase: 20s
-
-server:
-  port: 9090
-  shutdown: graceful
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: UTC
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,conditions,beans,env,mappings
+        include: health,conditions,beans,env,mappings,startup,metrics,loggers
   endpoint:
     health:
       probes:
         enabled: true
       show-details: always
-
-logging:
-  level:
-    org.springframework.boot.autoconfigure.condition: DEBUG

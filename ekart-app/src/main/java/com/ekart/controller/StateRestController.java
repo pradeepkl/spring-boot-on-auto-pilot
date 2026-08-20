@@ -13,40 +13,56 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.RequiredArgsConstructor;
+
 @Profile("dev")
 @RestController
 @RequestMapping("/v1/state")
+@RequiredArgsConstructor
 public class StateRestController {
 
     private final ApplicationAvailability applicationAvailability;
-    private final ApplicationEventPublisher applicationEventPublisher;
-
-    public StateRestController(
-            ApplicationAvailability applicationAvailability,
-            ApplicationEventPublisher applicationEventPublisher) {
-        this.applicationAvailability = applicationAvailability;
-        this.applicationEventPublisher = applicationEventPublisher;
-    }
+    private final ApplicationEventPublisher applicationEvent;
 
     @PostMapping("/liveness")
-    public Map<String, Object> toggleLiveness() {
-        LivenessState updated = applicationAvailability.getLivenessState() == LivenessState.CORRECT
-                ? LivenessState.BROKEN : LivenessState.CORRECT;
-        AvailabilityChangeEvent.publish(applicationEventPublisher, this, updated);
-        return stateResponse("liveness", updated);
+    public Map<String, Object> livenessState() {
+        LivenessState current = this.applicationAvailability
+                .getLivenessState();
+        LivenessState updated =
+                current == LivenessState.CORRECT
+                        ? LivenessState.BROKEN
+                        : LivenessState.CORRECT;
+        String state = updated == LivenessState.CORRECT
+                ? "System is functioning"
+                : "Application is not functioning";
+        AvailabilityChangeEvent.publish(
+                applicationEvent,
+                state,
+                updated);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("liveness", updated);
+        response.put("state", state);
+        return response;
     }
 
     @PostMapping("/readiness")
-    public Map<String, Object> toggleReadiness() {
-        ReadinessState updated = applicationAvailability.getReadinessState() == ReadinessState.ACCEPTING_TRAFFIC
-                ? ReadinessState.REFUSING_TRAFFIC : ReadinessState.ACCEPTING_TRAFFIC;
-        AvailabilityChangeEvent.publish(applicationEventPublisher, this, updated);
-        return stateResponse("readiness", updated);
-    }
-
-    private Map<String, Object> stateResponse(String name, Object state) {
+    public Map<String, Object> readinessState() {
+        ReadinessState current = this.applicationAvailability
+                .getReadinessState();
+        ReadinessState updated =
+                current == ReadinessState.ACCEPTING_TRAFFIC
+                        ? ReadinessState.REFUSING_TRAFFIC
+                        : ReadinessState.ACCEPTING_TRAFFIC;
+        String state = updated == ReadinessState.ACCEPTING_TRAFFIC
+                ? "System is accepting traffic"
+                : "Application is refusing traffic";
+        AvailabilityChangeEvent.publish(
+                applicationEvent,
+                state,
+                updated);
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put(name, state);
+        response.put("readiness", updated);
+        response.put("state", state);
         return response;
     }
 }

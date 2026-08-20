@@ -21,13 +21,17 @@ class OrderServiceTests {
     private OrderRepository orderRepository;
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "admin@ekart.com", roles = "ADMIN")
     void seededOrdersAreAvailable() {
         assertThat(orderService.getAllOrders()).hasSize(10);
         Order first = orderService.getOrderById(1L);
         assertThat(first.getCustomerName()).isNotBlank();
         assertThat(first.getEmail()).isNotBlank();
         assertThat(first.getTotalPrice()).isNotNull();
+        assertThat(first.getCreatedBy()).isEqualTo("system");
+        assertThat(first.getUpdatedBy()).isEqualTo("system");
+        assertThat(first.getCreatedTimestamp()).isNotNull();
+        assertThat(first.getUpdatedTimestamp()).isNotNull();
     }
 
     @Test

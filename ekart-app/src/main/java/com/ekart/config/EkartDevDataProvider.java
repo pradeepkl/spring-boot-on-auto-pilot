@@ -8,6 +8,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -20,11 +22,15 @@ import com.ekart.model.Role;
 import com.ekart.model.UserAccount;
 import com.ekart.repository.OrderRepository;
 import com.ekart.repository.UserRepository;
+
 import net.datafaker.Faker;
 
 @Component
 @Profile("dev")
 public class EkartDevDataProvider implements DevDataProvider {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(EkartDevDataProvider.class);
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
@@ -75,7 +81,8 @@ public class EkartDevDataProvider implements DevDataProvider {
                     .collect(Collectors.toList());
 
             BigDecimal totalPrice = lineItems.stream()
-                    .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                    .map(item -> item.getPrice()
+                            .multiply(BigDecimal.valueOf(item.getQuantity())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             Order order = Order.builder()
@@ -91,6 +98,8 @@ public class EkartDevDataProvider implements DevDataProvider {
             orderRepository.save(order);
         }
 
+        log.info("Seeded {} orders for customer: {}",
+                orderCount, customer.getUsername());
         seeded = true;
     }
 
@@ -101,7 +110,9 @@ public class EkartDevDataProvider implements DevDataProvider {
                     .password(passwordEncoder.encode("password123"))
                     .role(role)
                     .build();
-            return userRepository.save(account);
+            UserAccount saved = userRepository.save(account);
+            log.info("Seeded user: {} with role: {}", username, role);
+            return saved;
         });
     }
 }

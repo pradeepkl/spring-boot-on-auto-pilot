@@ -1,0 +1,35 @@
+# compose.yaml — describes the full eKart deployment
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ekart
+      POSTGRES_USER: ekart_user
+      POSTGRES_PASSWORD: ekart_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init/001-schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ekart_user -d ekart"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  ekart-app:
+    image: ekart-app:0.0.1-SNAPSHOT
+    ports:
+      - "9090:9090"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/ekart
+      DB_USERNAME: ekart_user
+      DB_PASSWORD: ekart_pass
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

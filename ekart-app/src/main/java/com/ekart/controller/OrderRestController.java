@@ -22,8 +22,8 @@ import com.ekart.model.CreateOrderRequest;
 import com.ekart.model.LineItem;
 import com.ekart.model.Order;
 import com.ekart.model.UpdateOrderRequest;
-import com.ekart.service.OrderService;
 import com.ekart.repository.UserRepository;
+import com.ekart.service.OrderService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +54,8 @@ public class OrderRestController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Order createOrder(@AuthenticationPrincipal UserDetails user,
+    public Order createOrder(
+            @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody CreateOrderRequest request) {
         log.info("Creating order for customer: {}",
                 request.customerName());
@@ -84,7 +85,6 @@ public class OrderRestController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteOrder(@PathVariable Long id) {
-        log.info("Deleting order with id: {}", id);
         orderService.deleteOrder(id);
     }
 

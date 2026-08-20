@@ -4,9 +4,11 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.access.prepost.PreAuthorize;
+
+import io.micrometer.core.instrument.MeterRegistry;
 
 import com.ekart.exception.OrderNotFoundException;
 import com.ekart.model.LineItem;
@@ -23,6 +25,7 @@ public class OrderService {
             LoggerFactory.getLogger(OrderService.class);
 
     private final OrderRepository orderRepository;
+    private final MeterRegistry meterRegistry;
 
     @PreAuthorize("hasRole('ADMIN')")
     public List<Order> getAllOrders() {
@@ -30,7 +33,10 @@ public class OrderService {
         return orderRepository.findAll();
     }
 
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('CUSTOMER') and @orderSecurity.isOwner(authentication, #id))")
+    @PreAuthorize(
+            "hasRole('ADMIN') or " +
+            "(hasRole('CUSTOMER') and " +
+            "@orderSecurity.isOwner(authentication, #id))")
     public Order getOrderById(Long id) {
         log.debug("Fetching order with id: {}", id);
         return orderRepository.findById(id)
@@ -45,11 +51,14 @@ public class OrderService {
     public Order saveOrder(Order order) {
         log.info("Saving order for customer: {}",
                 order.getCustomerName());
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        meterRegistry.counter("orders.created").increment();
+        return saved;
     }
 
     @Transactional
-    @PreAuthorize("hasRole('CUSTOMER') and @orderSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasRole('CUSTOMER') and " +
+            "@orderSecurity.isOwner(authentication, #id)")
     public Order updateOrder(Long id, Order updatedOrder) {
         log.info("Updating order with id: {}", id);
         Order existing = getOrderById(id);
@@ -60,7 +69,8 @@ public class OrderService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('CUSTOMER') and @orderSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasRole('CUSTOMER') and " +
+            "@orderSecurity.isOwner(authentication, #id)")
     public void deleteOrder(Long id) {
         log.info("Deleting order with id: {}", id);
         Order existing = getOrderById(id);
@@ -69,7 +79,8 @@ public class OrderService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('CUSTOMER') and @orderSecurity.isOwner(authentication, #orderId)")
+    @PreAuthorize("hasRole('CUSTOMER') and " +
+            "@orderSecurity.isOwner(authentication, #orderId)")
     public Order addLineItemToOrder(Long orderId, LineItem lineItem) {
         log.info("Adding line item to order {}", orderId);
         Order order = getOrderById(orderId);

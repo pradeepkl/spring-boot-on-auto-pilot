@@ -25,3 +25,4 @@ logging:
     com.ekart: DEBUG
     org.hibernate.SQL: DEBUG
     org.springframework.security: DEBUG
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE
