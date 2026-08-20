@@ -227,4 +227,44 @@ Then call `http://localhost:9090/v1/orders` (no credentials; seeder enabled in
 * `--debug` CONDITIONS EVALUATION REPORT for enable and disable
 * `CustomDevDataProvider` is in the manuscript only — this tag does not include it
 
+## Chapter 7 — Spring Security
+
+To view the files for Chapter 7, check out the `chapter-07-code` tag (commit
+`4942304`). That snapshot adds `spring-boot-starter-security` to `ekart-app`.
+H2 remains the database. Actuator, PostgreSQL, and `@Profile` are not in this
+tag.
+
+```bash
+git checkout chapter-07-code
+```
+
+You can also check out the commit directly:
+
+```bash
+git checkout 4942304bfd29a2ac955bc9a06bb687cfe00b8adc
+```
+
+Run the Chapter 7 application with JDK 21:
+
+```bash
+./mvnw -pl ekart-app -am test
+./mvnw -pl ekart-app spring-boot:run
+./mvnw -pl ekart-app spring-boot:run -Dspring-boot.run.arguments=--debug
+```
+
+Unauthenticated `GET /v1/orders` returns 401. After seeding, use HTTP Basic:
+
+* `admin@ekart.com` / `password123` for the collection
+* `customer@ekart.com` / `password123` for owned orders
+* `othercustomer@ekart.com` / `password123` is 403 on another customer's order
+
+### Topics covered in Chapter 7
+
+* Default security from the starter (generated password, 401, `--debug` matches)
+* `UserAccount`, `Role`, `UserRepository`, and `Order.owner`
+* `AppUserDetailsService`, `DaoAuthenticationProvider`, custom `SecurityFilterChain`
+* `OrderSecurity` and `@PreAuthorize` on `OrderService`
+* User seeding in `EkartDevDataProvider` (starter stays free of Security types)
+* 401 / 403 / 200 verification without Actuator
+
 Return to the latest code with `git checkout main`.
