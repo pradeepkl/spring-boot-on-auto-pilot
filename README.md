@@ -307,4 +307,44 @@ Default `dev` uses H2 and seeds data. `prod` expects PostgreSQL at
 * PostgreSQL runtime driver; no Actuator (`/actuator/*` is Chapter 9)
 * Maven profiles vs Spring profiles (Datafaker stays a compile dependency)
 
+## Chapter 9 — Actuator
+
+To view the files for Chapter 9, check out the `chapter-09-code` tag (commit
+`7658401`). That snapshot adds `spring-boot-starter-actuator` on `ekart-app`,
+graceful shutdown, probes, a development health indicator, `orders.created`,
+and Actuator matchers on `productionFilterChain` only. Default `dev` HTTP
+stays permit-all. Do not merge this tag onto `main`.
+
+```bash
+git checkout chapter-09-code
+```
+
+You can also check out the commit directly:
+
+```bash
+git checkout 7658401728e5990c3242f7904216ff63fc8b306a
+```
+
+Run the Chapter 9 application with JDK 21:
+
+```bash
+./mvnw -pl ekart-app -am test
+./mvnw -pl ekart-app spring-boot:run
+./mvnw -pl ekart-app spring-boot:run -Dspring-boot.run.arguments=--debug
+```
+
+`GET /actuator` lists the exposed endpoints. `management.server.port` is not
+bound; management shares port 9090.
+
+### Topics covered in Chapter 9
+
+* `spring-boot-starter-actuator` on `ekart-app`
+* Endpoint registration versus web exposure (`health` is the Boot 4.1.0 default)
+* `BufferingApplicationStartup(2048)` in `EkartApplication.main()`
+* Liveness and readiness probes; `@Profile("dev")` `/v1/state` toggles
+* `SeededOrdersHealthIndicator` (`org.springframework.boot.health.contributor`)
+* Micrometer `orders.created` after a successful `OrderService.saveOrder`
+* `/actuator/loggers` for `com.ekart.service.OrderService`
+* Production-chain Actuator security; health public, other routes `ADMIN`
+
 Return to the latest code with `git checkout main`.
