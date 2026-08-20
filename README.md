@@ -415,4 +415,42 @@ not run on the Chapter 11 workstation.
 * Convention-first Buildpack image name `ekart-app:${project.version}`
 * Build once, configure per environment (`--server.port`)
 
+## Chapter 12 — Deployment
+
+To view the files for Chapter 12, check out the `chapter-12-code` tag (commit
+`0812b65`). That snapshot peels Chapter 11 packaging and adds a Compose
+PostgreSQL deployment for `ekart-app` (prod profile, schema init, image).
+Do not merge this tag onto `main`.
+
+```bash
+git checkout chapter-12-code
+```
+
+You can also check out the commit directly:
+
+```bash
+git checkout 0812b652ec44990dc5ff5f131c8b0c6eb3cff91f
+```
+
+Package, build the image, and start Compose with JDK 21 and Docker:
+
+```bash
+./mvnw -pl ekart-app -am package
+docker build -t ekart-app:0.0.1-SNAPSHOT .
+docker compose up
+```
+
+HTTP is on port 9090. Use HTTP Basic (`customer@ekart.com` / `admin@ekart.com`,
+password `password123`). Tear down with `docker compose down` (omit `-v` to
+keep the named volume).
+
+### Topics covered in Chapter 12
+
+* `application-prod.yaml` env-var datasource and `ddl-auto: validate`
+* Docker Compose `postgres` + `ekart-app` with `service_healthy`
+* Schema init matching `UserAccount` / `Order` / `LineItem`
+* Actuator health with the PostgreSQL contributor
+* Volume persistence across container recreate
+* Graceful Tomcat shutdown on SIGTERM
+
 Return to the latest code with `git checkout main`.
