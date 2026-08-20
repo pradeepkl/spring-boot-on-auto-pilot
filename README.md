@@ -379,4 +379,40 @@ Run the Chapter 10 tests with JDK 21:
 * `@ActiveProfiles("test")` without breaking default `dev` tests
 * Security on the production chain: anonymous 401, customer 403, admin 200
 
+## Chapter 11 — Packaging
+
+To view the files for Chapter 11, check out the `chapter-11-code` tag (commit
+`afdb56d`). That snapshot keeps the Chapter 10 tests and turns on layered
+executable JAR packaging plus a Buildpack image name on `ekart-app`. Do not
+merge this tag onto `main`.
+
+```bash
+git checkout chapter-11-code
+```
+
+You can also check out the commit directly:
+
+```bash
+git checkout afdb56d0550d83be262654728f296122f0e0b598
+```
+
+Package and inspect the executable JAR with JDK 21:
+
+```bash
+./mvnw -pl ekart-app -am package
+java -jar ekart-app/target/ekart-app-0.0.1-SNAPSHOT.jar
+java -Djarmode=tools -jar ekart-app/target/ekart-app-0.0.1-SNAPSHOT.jar list-layers
+```
+
+`./mvnw -pl ekart-app spring-boot:build-image` needs a Docker daemon. It was
+not run on the Chapter 11 workstation.
+
+### Topics covered in Chapter 11
+
+* Spring Boot Maven Plugin `repackage` and `BOOT-INF` layout
+* Manifest `Main-Class` (`JarLauncher`) and `Start-Class` (`EkartApplication`)
+* Layered JARs (`BOOT-INF/layers.idx`; `jarmode=tools`)
+* Convention-first Buildpack image name `ekart-app:${project.version}`
+* Build once, configure per environment (`--server.port`)
+
 Return to the latest code with `git checkout main`.
