@@ -267,4 +267,44 @@ Unauthenticated `GET /v1/orders` returns 401. After seeding, use HTTP Basic:
 * User seeding in `EkartDevDataProvider` (starter stays free of Security types)
 * 401 / 403 / 200 verification without Actuator
 
+## Chapter 8 — Profiles and Configuration
+
+To view the files for Chapter 8, check out the `chapter-08-code` tag (commit
+`97c905b`). That snapshot splits YAML into shared, `dev`, and `prod` files.
+`@Profile("dev")` gates `EkartDevDataProvider`. Two `SecurityFilterChain`
+beans select permit-all HTTP versus the Chapter 7 authenticated chain.
+PostgreSQL is a runtime dependency. Actuator is not in this tag.
+
+```bash
+git checkout chapter-08-code
+```
+
+You can also check out the commit directly:
+
+```bash
+git checkout 97c905ba60552b09ddd85fc805688c59d6ece4f6
+```
+
+Run the Chapter 8 application with JDK 21:
+
+```bash
+./mvnw -pl ekart-app -am test
+./mvnw -pl ekart-app spring-boot:run
+./mvnw -pl ekart-app spring-boot:run -Dspring-boot.run.arguments=--debug
+./mvnw -pl ekart-app spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=prod
+```
+
+Default `dev` uses H2 and seeds data. `prod` expects PostgreSQL at
+`localhost:5432` (see Appendix C). Tests override the prod datasource to H2.
+
+### Topics covered in Chapter 8
+
+* Shared `application.yaml` plus `application-dev.yaml` / `application-prod.yaml`
+* `spring.profiles.default: dev` and command-line profile activation
+* Property-source precedence (`--ekart.dev.seeder.order-count=3`)
+* `@Profile("dev")` on `EkartDevDataProvider`; starter seeder stays conditional
+* `productionFilterChain` and `devPermitAllFilterChain` with `ekart.security.require-auth`
+* PostgreSQL runtime driver; no Actuator (`/actuator/*` is Chapter 9)
+* Maven profiles vs Spring profiles (Datafaker stays a compile dependency)
+
 Return to the latest code with `git checkout main`.
