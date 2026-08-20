@@ -66,10 +66,9 @@ class ActuatorProdSecurityTests {
     }
 
     @Test
-    void adminCanReadConditions() throws Exception {
+    void adminCannotReadUnexposedConditions() throws Exception {
         mockMvc.perform(get("/actuator/conditions")
                         .with(httpBasic(ADMIN, PASSWORD)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.contexts").exists());
+                .andExpect(status().isNotFound());
     }
 }

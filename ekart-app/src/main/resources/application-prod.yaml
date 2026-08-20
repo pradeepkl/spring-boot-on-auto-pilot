@@ -1,18 +1,31 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/ekart
-    username: ekart_user
-    password: ekart_pass
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ekart}
+    username: ${DB_USERNAME:ekart_user}
+    password: ${DB_PASSWORD:ekart_pass}
     driver-class-name: org.postgresql.Driver
   jpa:
     show-sql: false
     hibernate:
       ddl-auto: validate
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+
 ekart:
   dev:
     seeder:
       enabled: false
+  security:
+    require-auth: true
 
 logging:
   level:
